@@ -2,6 +2,9 @@
 #include <WiFiClientSecure.h>
 #include <WiFiUdp.h>
 #include <confidential.h>
+#include <AsyncUDP_WT32_ETH01.h>
+
+#define UDP_REMOTE_PORT 60000
 
 const char *ssid = confidential::ssid;         // Change this to your WiFi SSID
 const char *password = confidential::password; // Change this to your WiFi password
@@ -26,59 +29,12 @@ WiFiUDP udp;
 void setup()
 {
   Serial.begin(115200);
-
-  // Set WiFi to station mode and disconnect from an AP if it was Previously connected
-  WiFi.mode(WIFI_STA);
-  WiFi.disconnect();
-  delay(100);
-
-  // We start by connecting to a WiFi network
-
-  Serial.println();
-  Serial.println("******************************************************");
-  Serial.print("Connecting to ");
-  Serial.println(ssid);
-
-  WiFi.begin(ssid, password);
-
-  while (WiFi.status() != WL_CONNECTED)
-  {
-    delay(500);
-    Serial.print(".");
-  }
-
-  Serial.println("");
-  Serial.println("WiFi connected");
-  Serial.println("IP address: ");
-  Serial.println(WiFi.localIP());
-
-  udp.begin(udpServerPort); // Инициализация UDP для приема данных
 }
 
 void loop()
 {
-  if (WiFi.status() == WL_CONNECTED)
-  {
-    // Прием данных по UDP
-    int packetSize = udp.parsePacket();
-    if (packetSize)
-    {
-      Serial.println(packetSize);
-      char incomingPacket[255];
-      int len = udp.read(incomingPacket, 6);
-      if (len > 0)
-      {
-        incomingPacket[len] = 0;
-        Serial.printf("Получено сообщение: %s\n", incomingPacket);
-        Serial.printf(incomingPacket);
-        Serial.printf(confidential::magicmac);
-        // проверка мака на волшебный пакет. пока что только первые 6 байт
-        if (isPermutation(incomingPacket, confidential::magicmac, 6))
-        {
-          Serial.println("Magic mac");
-        }
-      }
-    }
-  }
+  delay(10000);
+  // Send broadcast on port UDP_REMOTE_PORT = 1234
+  udp.broadcastTo("Anyone here?", UDP_REMOTE_PORT);
   delay(1000);
 }
